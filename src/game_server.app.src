@@ -1,0 +1,18 @@
+{application, game_server,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  goldrush,
+                  gproc,
+                  lager,
+                  dhcomm,
+                  mongodb,
+                  protobuffs
+                 ]},
+  {mod, { game_server_app, []}},
+  {env, []}
+ ]}.

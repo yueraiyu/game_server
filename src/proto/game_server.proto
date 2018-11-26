@@ -1,0 +1,10 @@
+message game_server
+{
+    required int32 uid=1;
+    optional string name=2;
+    repeated int32 leave=3;
+    repeated string equ_name=4;
+    optional int32 equ_leave=5;
+    optional string tools_name=6;
+    optional int32 tool_num=7;
+}

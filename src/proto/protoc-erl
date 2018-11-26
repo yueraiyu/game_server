@@ -1,0 +1,6 @@
+#!/usr/bin/env escript
+%% -*- erlang -*-
+%%! -sasl errlog_type error -boot start_sasl -noshell -pa ../../deps/protobuffs/ebin
+main (_) ->
+  ImportDir = "./",
+  protobuffs_compile:generate_source(ImportDir ++ "game_server.proto",[{imports_dir, [ImportDir]}, {output_include_dir,"../../include/"}]).
