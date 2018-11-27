@@ -15,7 +15,7 @@
 -include("../include/game_server.hrl").
 
 %% connection api
--export([response/2]).
+-export([]).
 
 %% API
 -export([start_link/0]).
@@ -35,15 +35,6 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
--spec response(Conn :: pid(), Req :: term()) -> any().
-response(Conn, Req) ->
-  case Req of
-     other ->
-        lager:error("[~p] request [~p] error", [self(), Req]);
-     {Oper, Data} ->
-       lager:info("[~p] receive ~p request, receive request data ~p", [self(), Oper, Data]),
-       gen_server:cast(Conn, {response, {Oper, Data}})
-  end.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -211,22 +202,11 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 map_req(Req) ->
   case req:handle_req(Req) of
-    {login, Data} -> response(self(), {login, Data});
-    {register, Data} -> response(self(), {register, Data});
-    {login_out, Data} -> response(self(), {login_out, Data});
-    {upgrade, Data} -> response(self(), {upgrade, Data});
-    {change_name, Data} -> response(self(), {change_name, Data});
-    {change_pass, Data} -> response(self(), {change_pass, Data});
-    {chang_role, Data} -> response(self(), {chang_role, Data});
-    {add_tools, Data} -> response(self(), {add_tools, Data});
-    {delete_tools, Data} -> response(self(), {delete_tools, Data});
-    {upgrade_tools, Data} -> response(self(), {upgrade_tools, Data});
-    {add_equips, Data} -> response(self(), {add_equips, Data});
-    {delete_equips, Data} -> response(self(), {delete_equips, Data});
-    {upgrade_equips, Data} -> response(self(), {upgrade_equips, Data});
-    {send_msg, Data} -> response(self(), {send_msg, Data});
-    {info, Data} -> response(self(), {info, Data});
-    other -> response(self(), other)
+    {Oper, Data} ->
+      lager:info("[~p] receive ~p request, receive request data ~p", [self(), Oper, Data]),
+      gen_server:cast(self(), {response, {Oper, Data}});
+    other ->
+      lager:error("[~p] request [~p] error", [self(), other])
   end.
 
 send_msg(Data) ->

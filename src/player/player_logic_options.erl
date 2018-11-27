@@ -9,15 +9,20 @@
 -module(player_logic_options).
 -author("dhcd").
 
+-include("../../include/game_server_pb.hrl").
+
 %% role
 -define(ROLES, ["humanity", "mage", "elf", "orc", "angel"]).
 
 %% API
 -export([login/2, register/2, login_out/2, info/2, upgrade/2, change_name/2, change_pass/2, chang_role/2, add_tools/2, delete_tools/2, upgrade_tools/2, add_equips/2, delete_equips/2, upgrade_equips/2, append_msg/2]).
 
--spec login(Data :: term(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
+-spec login(Data :: #login_request{}, Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 login(Data, _Player) ->
-  case player_mongo_options:find_player(maps:get(name, Data), maps:get(role, Data), maps:get(pass, Data)) of
+  Name = Data#base_info.name,
+  Role = Data#base_info.role,
+  Pass = Data#base_info.pass,
+  case player_mongo_options:find_player(list_to_atom(Name), list_to_atom(Role), Pass) of
     {ok, Player}  ->
       Size = maps:size(Player),
       if
@@ -33,12 +38,15 @@ login(Data, _Player) ->
 
 -spec register(Data :: term(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 register(Data, _Player) ->
-  case player_mongo_options:find_player(maps:get(name, Data), maps:get(role, Data), maps:get(pass, Data)) of
+  Name = Data#base_info.name,
+  Role = Data#base_info.role,
+  Pass = Data#base_info.pass,
+  case player_mongo_options:find_player(list_to_atom(Name), list_to_atom(Role), Pass) of
     {ok, Player}  ->
       Size = maps:size(Player),
       if
         Size =:= 0 ->
-          Reg_player = player_options:create(list_to_atom(maps:get(name, Data)), list_to_atom(maps:get(role, Data)), maps:get(pass, Data)),
+          Reg_player = player_options:create(list_to_atom(Name), list_to_atom(Role), Pass),
           player_mongo_options:add_player(Reg_player),
           {ok, Reg_player};
         true ->
@@ -50,7 +58,10 @@ register(Data, _Player) ->
 
 -spec login_out(Data :: term(), Player :: player_options:player()) -> {ok, login_out}|{error, atom()}.
 login_out(Data, _Player) ->
-  case player_mongo_options:find_player(maps:get(name, Data), maps:get(role, Data), maps:get(pass, Data)) of
+  Name = Data#base_info.name,
+  Role = Data#base_info.role,
+  Pass = Data#base_info.pass,
+  case player_mongo_options:find_player(list_to_atom(Name), list_to_atom(Role), Pass) of
     {ok, Player}  ->
       Size = maps:size(Player),
       if
@@ -84,7 +95,8 @@ upgrade(_Data, Player) ->
 
 -spec change_name(Data :: term(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 change_name(Data, Player) ->
-  Update_ = player_options:change_name(list_to_atom(maps:get(new_name, Data)), Player),
+  Name = Data#base_info.name,
+  Update_ = player_options:change_name(list_to_atom(Name), Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
       {ok, Update_};
@@ -94,7 +106,8 @@ change_name(Data, Player) ->
 
 -spec change_pass(Data :: term(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 change_pass(Data, Player) ->
-  Update_ = player_options:change_pass(maps:get(new_pass, Data), Player),
+  Pass = Data#base_info.pass,
+  Update_ = player_options:change_pass(Pass, Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
       {ok, Update_};
@@ -104,7 +117,8 @@ change_pass(Data, Player) ->
 
 -spec chang_role(Data :: string(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 chang_role(Data, Player) ->
-  Update_ = player_options:chang_role(list_to_atom(maps:get(new_role, Data)), Player),
+  Role = Data#base_info.role,
+  Update_ = player_options:chang_role(list_to_atom(Role), Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
       {ok, Update_};
@@ -114,7 +128,8 @@ chang_role(Data, Player) ->
 
 -spec add_tools(Data :: term(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 add_tools(Data, Player) ->
-  Update_ = player_options:add_te(<<"tools">>, player_options:init_tools_or_equips(length(maps:get(tools, Data)), maps:get(tools, Data)), Player),
+  Tools = [convert_to_map(te, T) || T <- Data#add_tools_request.data],
+  Update_ = player_options:add_te(<<"tools">>, player_options:init_tools_or_equips(length(Tools), Tools), Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
       {ok, Update_};
@@ -124,7 +139,8 @@ add_tools(Data, Player) ->
 
 -spec delete_tools(Data :: term(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 delete_tools(Data, Player) ->
-  Update_ = player_options:delete_te(<<"tools">>, maps:get(tool, Data), Player),
+  Tool = convert_to_map(te, Data),
+  Update_ = player_options:delete_te(<<"tools">>, Tool, Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
       {ok, Update_};
@@ -134,7 +150,8 @@ delete_tools(Data, Player) ->
 
 -spec upgrade_tools(Data :: term(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 upgrade_tools(Data, Player) ->
-  Update_ = player_options:upgrade_te(<<"tools">>, maps:get(tool, Data), 1, Player),
+  Tool = convert_to_map(te, Data),
+  Update_ = player_options:upgrade_te(<<"tools">>, Tool, 1, Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
       {ok, Update_};
@@ -144,7 +161,8 @@ upgrade_tools(Data, Player) ->
 
 -spec add_equips(Data :: term(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 add_equips(Data, Player) ->
-  Update_ = player_options:add_te(<<"equips">>, player_options:init_tools_or_equips(length(maps:get(equips, Data)), maps:get(equips, Data)), Player),
+  Equips = [convert_to_map(te, T) || T <- Data],
+  Update_ = player_options:add_te(<<"equips">>, player_options:init_tools_or_equips(length(Equips), Equips), Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
       {ok, Update_};
@@ -154,7 +172,8 @@ add_equips(Data, Player) ->
 
 -spec delete_equips(Data :: term(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 delete_equips(Data, Player) ->
-  Update_ = player_options:delete_te(<<"equips">>, maps:get(equip, Data), Player),
+  Equip = convert_to_map(te, Data),
+  Update_ = player_options:delete_te(<<"equips">>, Equip, Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
       {ok, Update_};
@@ -164,7 +183,8 @@ delete_equips(Data, Player) ->
 
 -spec upgrade_equips(Data :: term(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 upgrade_equips(Data, Player) ->
-  Update_ = player_options:upgrade_te(<<"equips">>, maps:get(equip, Data), 1, Player),
+  Equip = convert_to_map(te, Data),
+  Update_ = player_options:upgrade_te(<<"equips">>, Equip, 1, Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
       {ok, Update_};
@@ -174,10 +194,27 @@ upgrade_equips(Data, Player) ->
 
 -spec append_msg(Data :: player_options:msg(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 append_msg(Data, Player) ->
-  Update_ = player_options:append_msg(Data, Player),
+  Msg = convert_to_map(msg, Data),
+  Update_ = player_options:append_msg(Msg, Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
       {ok, Update_};
     {error, _} ->
       {error, server_error}
   end.
+
+convert_to_map(Map_type,Rec) ->
+  case Map_type of
+      te  -> #{
+        name => Rec#te.name,
+        lv   => Rec#te.lv,
+        logo => Rec#te.logo
+      };
+      msg -> #{
+        from   => Rec#send_msg_request_message.from,
+        target => Rec#send_msg_request_message.target,
+        msg    => Rec#send_msg_request_message.msg
+      };
+      _   -> #{}
+  end.
+

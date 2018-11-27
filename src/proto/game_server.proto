@@ -1,10 +1,148 @@
-message game_server
-{
-    required int32 uid=1;
-    optional string name=2;
-    repeated int32 leave=3;
-    repeated string equ_name=4;
-    optional int32 equ_leave=5;
-    optional string tools_name=6;
-    optional int32 tool_num=7;
+// 登陆请求
+message login_request{
+    optional Operation oper = 1 [default = LOGIN];
+    required base_info data = 2;
 }
+
+// 注册请求
+message register_request{
+    optional Operation oper = 1 [default = REGISTER];
+    required base_info data = 2;
+}
+
+// 退出请求
+message login_out_request{
+    optional Operation oper = 1 [default = LOGIN_OUT];
+    required base_info data = 2;
+}
+
+// 用户升级请求
+message upgrade_request{
+    optional Operation oper = 1 [default = UPGRADE];
+    required empty data = 2;
+}
+
+// 修改玩家名请求
+message change_name_request{
+    optional Operation oper = 1 [default = CHANGE_NAME];
+    required change_name data = 2;
+
+    message change_name {
+        required string new_name = 1;
+    }
+}
+
+// 修改玩家密码请求
+message change_pass_request{
+    optional Operation oper = 1 [default = CHANGE_PASS];
+    required change_pass data = 2;
+
+    message change_pass {
+        required string new_pass = 1;
+    }
+}
+
+// 修改玩家角色请求
+message change_role_request{
+    optional Operation oper = 1 [default = CHANGE_ROLE];
+    required change_role data = 2;
+
+    message change_role {
+        required string new_role = 1;
+    }
+}
+
+// 添加道具
+message add_tools_request{
+    optional Operation oper = 1 [default = ADD_TOOLS];
+    repeated te data = 2 [packed=true];
+}
+
+// 删除道具
+message delete_tools_request{
+    optional Operation oper = 1 [default = DELETE_TOOLS];
+    required te data = 2;
+}
+
+// 升级道具
+message upgrade_tools_request{
+    optional Operation oper = 1 [default = UPGRADE_TOOLS];
+    required te data = 2;
+}
+
+// 添加装备
+message add_equips_request{
+    optional Operation oper = 1 [default = ADD_EQUIPS];
+    repeated te data = 2 [packed=true];
+}
+
+// 删除装备
+message delete_equips_request{
+    optional Operation oper = 1 [default = DELETE_EQUIPS];
+    required te data = 2;
+}
+
+// 升级装备
+message upgrade_equips_request{
+    optional Operation oper = 1 [default = UPGRADE_EQUIPS];
+    required te data = 2;
+}
+
+// 玩家信息
+message info_request{
+    optional Operation oper = 1 [default = INFO];
+    required empty data = 2;
+}
+
+// 发送消息
+message send_msg_request{
+    optional Operation oper = 1 [default = SEND_MSG];
+    required message data = 2;
+
+    // 消息
+    message message{
+        required string from = 1;
+        required string target = 2;
+        required string msg = 3;
+    }
+}
+
+// 基本信息数据， 用户登陆、注册、退出操作
+message base_info{
+    required string name = 1;
+    required string pass = 2;
+    required string role = 3;
+}
+
+// 空请求数据
+message empty{
+
+}
+
+// 道具 或 装备
+message te{
+    required string name = 1;
+    required int32 lv = 2;
+    required int32 logo = 3;
+}
+
+// 操作类型
+enum Operation{
+    UN_KNOWN = 0;
+    LOGIN = 1;
+    REGISTER = 2;
+    LOGIN_OUT = 3;
+    UPGRADE = 4;
+    CHANGE_NAME = 5;
+    CHANGE_PASS = 6;
+    CHANGE_ROLE = 7;
+    ADD_TOOLS = 8;
+    DELETE_TOOLS = 9;
+    UPGRADE_TOOLS = 10;
+    ADD_EQUIPS = 11;
+    DELETE_EQUIPS = 12;
+    UPGRADE_EQUIPS = 13;
+    INFO = 14;
+    SEND_MSG = 15;
+}
+
