@@ -55,7 +55,7 @@ message change_role_request{
 // 添加道具
 message add_tools_request{
     optional Operation oper = 1 [default = ADD_TOOLS];
-    repeated te data = 2 [packed=true];
+    repeated te data = 2;
 }
 
 // 删除道具
@@ -73,7 +73,7 @@ message upgrade_tools_request{
 // 添加装备
 message add_equips_request{
     optional Operation oper = 1 [default = ADD_EQUIPS];
-    repeated te data = 2 [packed=true];
+    repeated te data = 2;
 }
 
 // 删除装备

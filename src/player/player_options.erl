@@ -164,13 +164,19 @@ delete_te(Type, Tes, Player) ->
   Details = maps:get(<<"details">>, Tes_),
   Count   = maps:get(<<"count">>, Tes_),
   Target = filter(Tes, Details),
-  case Type of
-    <<"tools">>  ->
-      Tools = init_tools_or_equips(Count - 1, Details -- [Target]),
-      Player#{<<"bag">> := Bag_#{<<"tools">> := Tools}};
-    <<"equips">> ->
-      Equips = init_tools_or_equips(Count - 1, Details -- [Target]),
-      Player#{<<"bag">> := Bag_#{<<"equips">> := Equips}}
+  lager:info("[~p] delete ~p [~p] ~n", [self(), Type, Target]),
+  if
+    length(Target) =/= 0 ->
+      case Type of
+        <<"tools">>  ->
+          Tools = init_tools_or_equips(Count - 1, Details -- [Target]),
+          Player#{<<"bag">> := Bag_#{<<"tools">> := Tools}};
+        <<"equips">> ->
+          Equips = init_tools_or_equips(Count - 1, Details -- [Target]),
+          Player#{<<"bag">> := Bag_#{<<"equips">> := Equips}}
+      end;
+    true ->
+      Player
   end.
 
 %% 道具/装备升级
@@ -201,8 +207,8 @@ append_msg(Msg, Player) ->
 filter(Target, List) ->
   Find = fun(Info) -> Target =:= Info end,
   AllTarget = lists:filter(Find, List),
-
   if
-    length(AllTarget) >0   -> lists:last(AllTarget);
-    length(AllTarget) =< 0 -> []
+    length(AllTarget) > 1   ->
+      [H|_] = AllTarget, H;
+    length(AllTarget) =< 1 -> AllTarget
   end.

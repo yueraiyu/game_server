@@ -457,7 +457,7 @@ iolist(add_tools_request, Record) ->
 	  with_default(Record#add_tools_request.oper,
 		       'ADD_TOOLS'),
 	  operation, []),
-     pack(2, repeated_packed,
+     pack(2, repeated,
 	  with_default(Record#add_tools_request.data, none), te,
 	  [])];
 iolist(delete_tools_request, Record) ->
@@ -481,7 +481,7 @@ iolist(add_equips_request, Record) ->
 	  with_default(Record#add_equips_request.oper,
 		       'ADD_EQUIPS'),
 	  operation, []),
-     pack(2, repeated_packed,
+     pack(2, repeated,
 	  with_default(Record#add_equips_request.data, none), te,
 	  [])];
 iolist(delete_equips_request, Record) ->
@@ -847,7 +847,7 @@ decode(change_role_request, Bytes)
     to_record(change_role_request, Decoded);
 decode(add_tools_request, Bytes)
     when is_binary(Bytes) ->
-    Types = [{2, data, te, [is_record, repeated_packed]},
+    Types = [{2, data, te, [is_record, repeated]},
 	     {1, oper, operation, []}],
     Defaults = [{1, oper, 'ADD_TOOLS'}, {2, data, []}],
     Decoded = decode(Bytes, Types, Defaults),
@@ -868,7 +868,7 @@ decode(upgrade_tools_request, Bytes)
     to_record(upgrade_tools_request, Decoded);
 decode(add_equips_request, Bytes)
     when is_binary(Bytes) ->
-    Types = [{2, data, te, [is_record, repeated_packed]},
+    Types = [{2, data, te, [is_record, repeated]},
 	     {1, oper, operation, []}],
     Defaults = [{1, oper, 'ADD_EQUIPS'}, {2, data, []}],
     Decoded = decode(Bytes, Types, Defaults),

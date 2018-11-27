@@ -13,6 +13,7 @@
 
 %% include server define
 -include("../include/game_server.hrl").
+-include("../../include/game_server_pb.hrl").
 
 %% connection api
 -export([]).
@@ -115,24 +116,30 @@ handle_cast({response, {Oper, Data}}, State) ->
 
           case Oper of
              login    ->
-               gproc:reg({n, l, maps:get(<<"index">>, Rep)}, State#state.conn),
+               gproc:reg({n, l, maps:get(<<"index">>, Rep)}),
                lager:info("[~p] login success, regist ~p as ~p ~n", [self(), gproc:lookup_pid({n, l, maps:get(<<"index">>, Rep)}), maps:get(<<"index">>, Rep)]);
              register ->
-               gproc:reg({n, l, maps:get(<<"index">>, Rep)}, State#state.conn),
-               lager:info("[~p] register success, regist ~p as ~p ~n", [self(), gproc:lookup_pid({n, l, maps:get(<<"index">>, Rep)}), maps:get(<<"index">>, Rep)])
+               gproc:reg({n, l, maps:get(<<"index">>, Rep)}),
+               lager:info("[~p] register success, regist ~p as ~p ~n", [self(), gproc:lookup_pid({n, l, maps:get(<<"index">>, Rep)}), maps:get(<<"index">>, Rep)]);
+             _ ->
+               {noreply, State}
           end,
 
           case Rep of
             login_out ->
               {stop, login_out, #state{}};
             Player ->
-              {noreply, State#state{player = Player}}
+              {noreply, State#state{player = Player}};
+            _ ->
+              {noreply, State}
           end;
         {error, Reason} ->
           dhtcp_conn:send(State#state.conn, term_to_binary(#{status => 500, data => Reason})),
           {noreply, State};
         {warring, Reason} ->
           dhtcp_conn:send(State#state.conn, term_to_binary(#{status => 400, data => Reason})),
+          {noreply, State};
+        _ ->
           {noreply, State}
     end
   end;
@@ -161,7 +168,7 @@ handle_info({dhconn_start, Pid}, State) ->
   lager:info("[~p] connect created, pid is [~p]", [self(), Pid]),
   {noreply, State#state{conn = Pid}};
 handle_info({message, Data}, State) ->
-  lager:info("[~p] receive message from [~p] : [~p]", [self(), maps:get(from, Data), maps:get(msg, Data)]),
+  lager:info("[~p] receive message from [~p] : [~p]", [self(), Data#send_msg_request_message.from, Data#send_msg_request_message.msg]),
   {ok, Player} = player_logic_options:append_msg(Data, State#state.player),
   {noreply, State#state{player = Player}};
 handle_info(_Info, State) ->
@@ -210,7 +217,10 @@ map_req(Req) ->
   end.
 
 send_msg(Data) ->
-  lager:info("[~p] ~p send [~p] to ~p ~n", [self(), maps:get(from, Data), maps:get(msg, Data), maps:get(target, Data)]),
-  Target = gproc:lookup_pid({n, l, maps:get(target, Data)}),
-  Target ! {message, Data},
-  dhtcp_conn:send(Target, term_to_binary(#{status => 200, data => {message, Data}})).
+  From = Data#send_msg_request_message.from,
+  Target = Data#send_msg_request_message.target,
+  Msg = Data#send_msg_request_message.msg,
+  Dest = gproc:lookup_pid({n, l, list_to_atom(Target)}),
+  lager:info("[~p] ~p send [~p] to ~p ~n", [self(), From, Msg, Target]),
+  Dest ! {message, Data},
+  dhtcp_conn:send(Dest, term_to_binary(#{status => 200, data => {message, Data}})).

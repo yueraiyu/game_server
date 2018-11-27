@@ -15,7 +15,7 @@
 -define(ROLES, ["humanity", "mage", "elf", "orc", "angel"]).
 
 %% API
--export([login/2, register/2, login_out/2, info/2, upgrade/2, change_name/2, change_pass/2, chang_role/2, add_tools/2, delete_tools/2, upgrade_tools/2, add_equips/2, delete_equips/2, upgrade_equips/2, append_msg/2]).
+-export([login/2, register/2, login_out/2, info/2, upgrade/2, change_name/2, change_pass/2, change_role/2, add_tools/2, delete_tools/2, upgrade_tools/2, add_equips/2, delete_equips/2, upgrade_equips/2, append_msg/2]).
 
 -spec login(Data :: #login_request{}, Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 login(Data, _Player) ->
@@ -95,7 +95,7 @@ upgrade(_Data, Player) ->
 
 -spec change_name(Data :: term(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 change_name(Data, Player) ->
-  Name = Data#base_info.name,
+  Name = Data#change_name_request_change_name.new_name,
   Update_ = player_options:change_name(list_to_atom(Name), Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
@@ -106,7 +106,7 @@ change_name(Data, Player) ->
 
 -spec change_pass(Data :: term(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 change_pass(Data, Player) ->
-  Pass = Data#base_info.pass,
+  Pass = Data#change_pass_request_change_pass.new_pass,
   Update_ = player_options:change_pass(Pass, Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
@@ -115,9 +115,9 @@ change_pass(Data, Player) ->
       {error, server_error}
   end.
 
--spec chang_role(Data :: string(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
-chang_role(Data, Player) ->
-  Role = Data#base_info.role,
+-spec change_role(Data :: string(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
+change_role(Data, Player) ->
+  Role = Data#change_role_request_change_role.new_role,
   Update_ = player_options:chang_role(list_to_atom(Role), Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
@@ -128,7 +128,7 @@ chang_role(Data, Player) ->
 
 -spec add_tools(Data :: term(), Player :: player_options:player()) -> {ok, Player :: player_options:player()}|{error, atom()}.
 add_tools(Data, Player) ->
-  Tools = [convert_to_map(te, T) || T <- Data#add_tools_request.data],
+  Tools = [convert_to_map(te, T) || T <- Data],
   Update_ = player_options:add_te(<<"tools">>, player_options:init_tools_or_equips(length(Tools), Tools), Player),
   case player_mongo_options:update_player(Update_) of
     ok ->
@@ -206,14 +206,14 @@ append_msg(Data, Player) ->
 convert_to_map(Map_type,Rec) ->
   case Map_type of
       te  -> #{
-        name => Rec#te.name,
-        lv   => Rec#te.lv,
-        logo => Rec#te.logo
+        <<"name">> => list_to_atom(Rec#te.name),
+        <<"lv">>   => Rec#te.lv,
+        <<"logo">> => Rec#te.logo
       };
       msg -> #{
-        from   => Rec#send_msg_request_message.from,
-        target => Rec#send_msg_request_message.target,
-        msg    => Rec#send_msg_request_message.msg
+        <<"from">>   => Rec#send_msg_request_message.from,
+        <<"target">> => Rec#send_msg_request_message.target,
+        <<"msg">>    => Rec#send_msg_request_message.msg
       };
       _   -> #{}
   end.
