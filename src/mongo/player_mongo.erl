@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 15. 十一月 2018 下午3:33
 %%%-------------------------------------------------------------------
--module(player_mongo_options).
+-module(player_mongo).
 -author("dhcd").
 
 -define(CONNECT_URL, <<"10.0.0.13:7109">>).

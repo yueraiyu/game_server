@@ -72,4 +72,3 @@ handle_req(<<Op:8, Req/binary>>) ->
       SendMsgReq = game_server_pb:decode_send_msg_request(Req),
       {list_to_atom(string:to_lower(atom_to_list(SendMsgReq#send_msg_request.oper))), SendMsgReq#send_msg_request.data}
   end.
-%%  {maps:get(oper, Req), maps:get(data, Req)}.
