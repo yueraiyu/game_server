@@ -48,7 +48,7 @@ register(Data, _Player) ->
         Size =:= 0 ->
           Reg_player = player_mod:create(list_to_atom(Name), list_to_atom(Role), Pass),
           player_mongo:add_player(Reg_player),
-          {ok, Reg_player};
+          player_mongo:find_player(list_to_atom(Name), list_to_atom(Role), Pass);
         true ->
           {warring, had_registed}
       end;
